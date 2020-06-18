@@ -1,7 +1,7 @@
 # 24Game
 Play and/or generate games for the Math "24" Game
 
-https://en.wikipedia.org/wiki/24_Game
+Background on the game: https://en.wikipedia.org/wiki/24_Game
 
 
 ### Play a single game
@@ -34,4 +34,4 @@ for game in games:
     print("\n")
 ```
 
-### Set DEBUG flag in the script to change verbosity level
+##### Set DEBUG flag in the script to change verbosity level
