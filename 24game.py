@@ -59,6 +59,7 @@ ops_perms = list(itertools.product(op_list, repeat=3))
 
 #-----------------------------------------------------------------------------------------
 def dprint(lvl, msg, end=None):
+    """ Print if at/above the DEBUG level"""
     if lvl <= DEBUG:
         print("(D%d): %s" % (lvl,msg), end=end)
 
@@ -66,6 +67,7 @@ def dprint(lvl, msg, end=None):
 def get_num_permutations(num_list):
     """
      Build a list of number permuations from passed 4-number num-list.
+     Args: list containing 4 numbers.
      Returns: list of tuples, each tuple being an unique arrangemnt of the 4 numbers
     """
     num_perms = list(itertools.permutations(num_list))
@@ -136,7 +138,7 @@ def check_24(ns_list, os_list):
 #-----------------------------------------------------------------------------------------
 def calc (n1, op, n2):
     """
-    Calculate the mathematical expression given be two numbers and an operator.
+    Calculate the mathematical expression given be two numbers (n1, n2) and an operator (op).
     TODO: this function can be avoided by using Python's "op" module, and generating permutations of
     function references rather than "op" strings
     """
@@ -190,6 +192,7 @@ def build_game():
 def generate_valid_games(N):
     """
      Create a set of N "games" which have one or more solutions.
+     Args: (int) number of "games" to create.
      Return the number-sequences and corresponding solutions for each.
     """
 
