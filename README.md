@@ -21,7 +21,7 @@ for i,s in enumerate(solution_list, start=1):
     print("%d: %s" % (i,str(s)))
 ```
 
-### Play or build a multiple games (ALL with one or more solutions)
+### Play or build multiple games (ALL with one or more solutions)
 ```
 from 24game import generate_valid_games
 ...
