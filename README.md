@@ -6,6 +6,7 @@ https://en.wikipedia.org/wiki/24_Game
 
 ### Play a single game
 #### You can hide the solutions, but we show them in this example. NOTE: There may or may not be solutions!
+```
 from 24game import build_game
 ...
 game = build_game()
@@ -15,8 +16,10 @@ print("NUMBERS: %s" % (numbers))
 print("SOLUTIONS: %d" % len(solution_list))
 for i,s in enumerate(solution_list, start=1):
     print("%d: %s" % (i,str(s)))
+```
 
 ### Play or build a multiple games (ALL with one or more solutions)
+```
 from 24game import generate_valid_games
 ...
 #Perform 5 (valid) games
@@ -29,5 +32,6 @@ for game in games:
     for i,s in enumerate(solution_list, start=1):
         print("%d: %s" % (i,str(s)))
     print("\n")
+```
 
 ### Set DEBUG flag in the script to change verbosity level
