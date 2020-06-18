@@ -3,8 +3,9 @@ Play and/or generate games for the Math "24" Game
 
 Background on the game: https://en.wikipedia.org/wiki/24_Game
 
-### TODO: Put a UI around this code and create a challenge to solve 10 games in shortes amount of time
+#### TODO: Put a UI around this code and create a challenge to solve 10 games in shortes amount of time
 
+---
 
 ### Play a single game
 #### You can hide the solutions, but we show them in this example. NOTE: There may or may not be solutions!
