@@ -237,7 +237,7 @@ def generate_valid_games(N):
     """
 
     games = []
-    while len(games) <= N:
+    while len(games) < N:
         game = build_game()
         N_solutions = len(game['solutions'])
         if N_solutions:
@@ -262,11 +262,11 @@ if __name__ == '__main__':
 
     ## Perform 5 (valid) games!
     games = generate_valid_games(3)
-    for game in games:
+    for n,game in enumerate(games, start=1):
         solution_list = game['solutions']
         numbers = game['numbers']
-        print("NUMBERS: %s" % (numbers))
-        print("SOLUTIONS: %d" % len(solution_list))
+        print("Game-%d NUMBERS: %s" % (n,numbers))
+        print("Game-%d SOLUTIONS: %d" % (n,len(solution_list)))
         for i,s in enumerate(solution_list, start=1):
             print("%d: %s" % (i,str(s)))
         print("\n")
