@@ -1,33 +1,38 @@
 """
   File: 24game.py
-
   Description:
-   This script generates problems and solutions for the "24" math game  (https://en.wikipedia.org/wiki/24_Game)
+   This script generates problems and solutions for the "24" math game:
+    (https://en.wikipedia.org/wiki/24_Game)
 
   Author: Bill Fanselow  2020-06-18
 
   Credit to "OregonTrail" on StackOverflow for ideas on simplifying the logic.
   (https://stackoverflow.com/questions/25028929/24-game-using-python/25029244)
-
   --------------
+
   Logic:
     Each round of play consists of four numbers and three operators.
     The four numbers can be arranged in 4!=24 ways (order matters).
     Since, operators can be repeated, there are 4**3=64 operator permutations.
+    Therefore we have 24*64=1536 possible permutations of combining 
+    the number-seq permuatations with the operator-equence permutations.
 
-    It might seem that we would have 24*64=1560 possible math equation permutations from
-    combining the number-seq permuatations with the operator permutations.
+    Now, we add to this all the possible permutations of sub-groupings
+    of the equation "tokens" with parenthesis and we end up with 6144 equations.
 
-    However, the actual number of mathematically-unique equations is much less than this
-    due to many of the equations being mathematically equivelent as a result of
-        the Commutitive and Associative properties of addition and multiplication:
+    However, the actual number of mathematically-unique equations is less than this
+    due to many of the equations being mathematically equivelent as a result of the
+    Commutitive and Associative properties of addition and multiplication:
          * Commutative: 2+3 = 3+2,  and 2*3 = 3*2
          * Associative: (2+4)+3 = 2+(4+3), and (2*3)*4 = 2*(3*4)
 
+    After generating a random sequence of 4 numbers we perform all possible
+    mathematical equation permuations (except those involving division-by-zero), 
+    iterating over the different number-sequences and operator sequences, and 
+    performing all unique parenthesis groupings. Any final calculations that result 
+    in 24 are stored.
 
-     After generating a random sequence of 4 numbers we perform all possible
-     mathematical permuations (except those involving division-by-zero) to
-     identify which ones result in 24.
+    TODO: remove all mathematically equivelent solutions.
 
   --------------
   NOTES:
@@ -37,16 +42,12 @@
        a) 4 / 5 = 0.8
        b) 6 * 5 = 30
        c) 30 * 0.8 = 24
-
-  TODO: Need to validate why we have 128 mathematically unique calculations for each game.
-        This number seems suspiciously low.
-
 """
 
 import itertools
 import random
 
-DEBUG = 2
+DEBUG = 0 
 
 # Play the game with either 1-digit limit (1-9) or 2-digit limit (1-24)
 DIGITS = 1
@@ -74,7 +75,7 @@ def get_num_permutations(num_list):
     return num_perms
 
 #-----------------------------------------------------------------------------------------
-def check_24(ns_list, os_list):
+def find_all_24(ns_list, os_list):
   """
    Take a list of 4-digit tuples, and a list of 3-operator tuples, for example ('+' '*', '*')
    and determine if 24 can be made from any of the combined mathematical operations.
@@ -83,7 +84,6 @@ def check_24(ns_list, os_list):
     * ns_list: list of number-sequence tuples, each containing uniq combo of 4 numbers
     * os_list: list of operator-sequence tuples, each containing uniq combo of 3 operators
    Return: list of valid solutions. Can be empty!
-
    TODO: The difference between the inner "for" loops can be abstracted away if prefix
    expressions are generated and evaluated instead.
   """
@@ -93,46 +93,87 @@ def check_24(ns_list, os_list):
   solution_tokens = []
 
   tot_equations = 0
+  tot_token_permutations = 0
 
   # Iterate over list of number sequences
   for ns in ns_list: # example (3,3,2,2)
 
-    # Iterate over operators, for sequential operations: example below for ns=(3,3,2,2)
-    for op in os_list:
+    # Iterate over list of operator-sequences
+    for ops in os_list:
+
+        tot_token_permutations += 1 
+        dprint(2, "[%d]: %s  %s" % (tot_token_permutations, str(ns), str(ops))) 
+        token_set = (ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
+        solution_tokens.append( token_set )
+
+        # Now we construct the unique combinations of parenthesis groupings 
+
+        #-------------------
+        # 1) Sequential operations: example, for ns=(3,3,2,2): equation=((3+3)*2)*2
+        # Don;t have to consider divide-by-zero here since input numbers cannot be 0 
         tot_equations += 1
-        result = calc(ns[0], op[0], ns[1])    # 3+3=6
-        result = calc(result, op[1], ns[2])   # 6*2=12
-        result = calc(result, op[2], ns[3])   # 12*2=24
+        result = calc(ns[0], ops[0], ns[1])    # 3+3=6
+        result = calc(result, ops[1], ns[2])   # 6*2=12
+        result = calc(result, ops[2], ns[3])   # 12*2=24
         if result == 24:
-            sol = "((%d%s%d)%s%d)%s%d" % ( ns[0], op[0], ns[1], op[1], ns[2], op[2], ns[3] )
-            token_set = (ns[0], op[0], ns[1], op[1], ns[2], op[2], ns[3] )
+            sol = "((%d%s%d)%s%d)%s%d" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
             dprint(1, ">>> Solution (seq): %s" % (sol) )
-            solution_tokens.append( token_set )
             solutions.append( sol )
 
-    # Iterate again over operators for paired operations: example below for ns=(8,4,1,1)
-    for op in os_list:
+        #-------------------
+        # 2) Paired operations - left/right (p-lr): example, for ns=(8,4,1,1): equation=(8+4)*(1+1)
         tot_equations += 1
-        result1 = calc(ns[0], op[0], ns[1]) # (8+4)=12
-        result2 = calc(ns[2], op[1], ns[3]) # (1+1)=2
+        result_l = calc(ns[0], ops[0], ns[1]) # (8+4)=12
+        result_r = calc(ns[2], ops[2], ns[3]) # (1+1)=2
 
-        # pass on any divide-by-zero options
-        if op[2] == '/' and result2 == 0:
-            dprint(4, ">>> Ignore div-by-zero: (%d/%d) " % (result1, result2) )
-            continue
+        # Pass on any divide-by-zero options
+        if ops[1] == '/' and result_r == 0:
+            dprint(4, ">>> Ignore div-by-zero (p-lr): (%d/%d) " % (result_l, result_r) )
 
-        result = calc(result1, op[2], result2) # (12*2)=24
-        if result == 24:
-            sol = "(%d%s%d)%s(%d%s%d)" % ( ns[0], op[0], ns[1], op[2], ns[2], op[1], ns[3] )
-            token_set = (ns[0], op[0], ns[1], op[2], ns[2], op[1], ns[3] )
-            if token_set in solution_tokens:
-               dprint(2, ">>> Non-Unique Solution (pair): %s" % (sol) )
-               continue
-            dprint(1, ">>> Solution (pair): %s" % (sol) )
-            solutions.append( sol )
+        else:
+          result = calc(result_l, ops[1], result_r) # (12*2)=24
+          if result == 24:
+              sol = "(%d%s%d)%s(%d%s%d)" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
+              dprint(1, ">>> Solution (p-lr): %s" % (sol) )
+              solutions.append( sol )
 
-    dprint(4, "Total-equations: %d" % (tot_equations))
-    return solutions
+        #-------------------
+        # Paired operations - inside/out,*left-right* (p-io-lr): example, for ns=(8,4,3,4): equation=(8 + (4*3))+4 
+        tot_equations += 1
+        result_m = calc(ns[1], ops[1], ns[2])   # (4*3)=12
+
+        # Pass on any divide-by-zero options
+        if ops[0] == '/' and result_m == 0:
+            dprint(4, ">>> Ignore div-by-zero (p-io-lr): (%d/%d) " % (ns[0], result_m) )
+
+        else:
+          result_ml = calc(ns[0], ops[0], result_m) # (8+12)=20
+          result = calc(result_ml, ops[2], ns[3])   # (20+4)=24
+          if result == 24:
+              sol = "(%d%s(%d%s%d))%s%d" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
+              dprint(1, ">>> Solution (p-io-lr): %s" % (sol) )
+              solutions.append( sol )
+
+        #-------------------
+        # Paired operations - inside/out, *right-left* (p-io-rl): example, for ns=(8,12,6,1): equation=8*((12 / 6) + 1) 
+        tot_equations += 1
+        result_m = calc(ns[1], ops[1], ns[2])     # (12/6)=2
+        result_mr = calc(result_m, ops[2], ns[3]) # (2+1)=3
+
+        # Pass on any divide-by-zero options
+        if ops[0] == '/' and result_mr == 0:
+            dprint(4, ">>> Ignore div-by-zero (p-io-rl): (%d/%d) " % (ns[0], result_mr) )
+        
+        else: 
+          result = calc(ns[0], ops[0], result_mr) # (8*3)=24
+          if result == 24:
+              sol = "%d%s((%d%s%d)%s%d)" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
+              dprint(1, ">>> Solution (p-io-rl): %s" % (sol) )
+              solutions.append( sol )
+
+  dprint(4, "Total-token-permutations: %d" % (tot_token_permutations))
+  dprint(2, "Total-equations: %d" % (tot_equations))
+  return solutions
 
 
 #-----------------------------------------------------------------------------------------
@@ -179,7 +220,7 @@ def build_game():
     dprint(4, "NS: %s" % number_sequences)
     dprint(4, "OPS (%d): %s" % (len(ops_perms), ops_perms), end="\n\n")
 
-    solution_list = check_24(number_sequences, ops_perms)
+    solution_list = find_all_24(number_sequences, ops_perms)
 
     result = {
      'numbers': r4,
@@ -221,7 +262,7 @@ if __name__ == '__main__':
     print("\n------------------------\n")
 
     ## Perform 5 (valid) games!
-    games = generate_valid_games(5)
+    games = generate_valid_games(3)
     for game in games:
         solution_list = game['solutions']
         numbers = game['numbers']
