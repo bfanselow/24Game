@@ -19,7 +19,7 @@
     permutations.
 
     Now, we add to this all the possible permutations of sub-groupings
-    of equation "tokens" by parenthesis and we end up with 6144 equations.
+    of equation "tokens" by parenthesis which results in 6144 total equations.
 
     If a number is repeated in the number-sequence there will be duplicate equations
     which we skip. Of the remaining equations, the actual number of equations that
