@@ -50,7 +50,7 @@ import random
 DEBUG = 0 
 
 # Play the game with either 1-digit limit (1-9) or 2-digit limit (1-24)
-DIGITS = 1
+DIGITS = 1 
 
 # All operators
 op_list = [ '+', '-', '*', '/' ]
@@ -76,102 +76,102 @@ def get_num_permutations(num_list):
 
 #-----------------------------------------------------------------------------------------
 def find_all_24(ns_list, os_list):
-  """
-   Take a list of 4-digit tuples, and a list of 3-operator tuples, for example ('+' '*', '*')
-   and determine if 24 can be made from any of the combined mathematical operations.
-   Store all valid solutions.
-   Args:
-    * ns_list: list of number-sequence tuples, each containing uniq permutation of 4 numbers
-    * os_list: list of operator-sequence tuples, each containing uniq permutation of 3 operators
-   Return: list of valid solutions. Can be empty!
-  """
+    """
+     Take a list of 4-digit tuples, and a list of 3-operator tuples, for example ('+' '*', '*')
+     and determine if 24 can be made from any of the combined mathematical operations.
+     Store all valid solutions.
+     Args:
+      * ns_list: list of number-sequence tuples, each containing uniq permutation of 4 numbers
+      * os_list: list of operator-sequence tuples, each containing uniq permutation of 3 operators
+     Return: list of valid solutions. Can be empty!
+    """
 
-  solutions = []
-  solution_tokens = []
+    solutions = []
+    solution_tokens = []
 
-  tot_equations = 0
-  tot_token_permutations = 0
+    tot_equations = 0
+    tot_token_permutations = 0
 
-  # Iterate over list of number sequences
-  for ns in ns_list: # example (3,3,2,2)
+    # Iterate over list of number sequences
+    for ns in ns_list: # example (3,3,2,2)
 
-    # Iterate over list of operator-sequences
-    for ops in os_list:
+        # Iterate over list of operator-sequences
+        for ops in os_list:
 
-        tot_token_permutations += 1 
-        dprint(2, "[%d]: %s  %s" % (tot_token_permutations, str(ns), str(ops))) 
-        token_set = (ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
-        solution_tokens.append( token_set )
+            tot_token_permutations += 1 
+            dprint(2, "[%d]: %s  %s" % (tot_token_permutations, str(ns), str(ops))) 
+            token_set = (ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
+            solution_tokens.append( token_set )
 
-        # Now we construct the unique combinations of parenthesis groupings 
+            # Now we construct the unique combinations of parenthesis groupings 
 
-        #-------------------
-        # 1) Sequential operations: example, for ns=(3,3,2,2): equation=((3+3)*2)*2
-        # Don;t have to consider divide-by-zero here since input numbers cannot be 0 
-        tot_equations += 1
-        result = calc(ns[0], ops[0], ns[1])    # 3+3=6
-        result = calc(result, ops[1], ns[2])   # 6*2=12
-        result = calc(result, ops[2], ns[3])   # 12*2=24
-        if result == 24:
-            sol = "((%d%s%d)%s%d)%s%d" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
-            dprint(1, ">>> Solution (seq): %s" % (sol) )
-            solutions.append( sol )
+            #-------------------
+            # 1) Sequential operations: example, for ns=(3,3,2,2): equation=((3+3)*2)*2
+            # Don;t have to consider divide-by-zero here since input numbers cannot be 0 
+            tot_equations += 1
+            result = calc(ns[0], ops[0], ns[1])    # 3+3=6
+            result = calc(result, ops[1], ns[2])   # 6*2=12
+            result = calc(result, ops[2], ns[3])   # 12*2=24
+            if result == 24:
+                sol = "((%d%s%d)%s%d)%s%d" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
+                dprint(1, ">>> Solution (seq): %s" % (sol) )
+                solutions.append( sol )
 
-        #-------------------
-        # 2) Paired operations - left/right (p-lr): example, for ns=(8,4,1,1): equation=(8+4)*(1+1)
-        tot_equations += 1
-        result_l = calc(ns[0], ops[0], ns[1]) # (8+4)=12
-        result_r = calc(ns[2], ops[2], ns[3]) # (1+1)=2
+            #-------------------
+            # 2) Paired operations - left/right (p-lr): example, for ns=(8,4,1,1): equation=(8+4)*(1+1)
+            tot_equations += 1
+            result_l = calc(ns[0], ops[0], ns[1]) # (8+4)=12
+            result_r = calc(ns[2], ops[2], ns[3]) # (1+1)=2
 
-        # Pass on any divide-by-zero options
-        if ops[1] == '/' and result_r == 0:
-            dprint(4, ">>> Ignore div-by-zero (p-lr): (%d/%d) " % (result_l, result_r) )
+            # Pass on any divide-by-zero options
+            if ops[1] == '/' and result_r == 0:
+                dprint(4, ">>> Ignore div-by-zero (p-lr): (%d/%d) " % (result_l, result_r) )
 
-        else:
-          result = calc(result_l, ops[1], result_r) # (12*2)=24
-          if result == 24:
-              sol = "(%d%s%d)%s(%d%s%d)" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
-              dprint(1, ">>> Solution (p-lr): %s" % (sol) )
-              solutions.append( sol )
+            else:
+                result = calc(result_l, ops[1], result_r) # (12*2)=24
+                if result == 24:
+                    sol = "(%d%s%d)%s(%d%s%d)" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
+                    dprint(1, ">>> Solution (p-lr): %s" % (sol) )
+                    solutions.append( sol )
 
-        #-------------------
-        # Paired operations - inside/out,*left-right* (p-io-lr): example, for ns=(8,4,3,4): equation=(8 + (4*3))+4 
-        tot_equations += 1
-        result_m = calc(ns[1], ops[1], ns[2])   # (4*3)=12
+            #-------------------
+            # Paired operations - inside/out,*left-right* (p-io-lr): example, for ns=(8,4,3,4): equation=(8 + (4*3))+4 
+            tot_equations += 1
+            result_m = calc(ns[1], ops[1], ns[2])   # (4*3)=12
 
-        # Pass on any divide-by-zero options
-        if ops[0] == '/' and result_m == 0:
-            dprint(4, ">>> Ignore div-by-zero (p-io-lr): (%d/%d) " % (ns[0], result_m) )
+            # Pass on any divide-by-zero options
+            if ops[0] == '/' and result_m == 0:
+                dprint(4, ">>> Ignore div-by-zero (p-io-lr): (%d/%d) " % (ns[0], result_m) )
 
-        else:
-          result_ml = calc(ns[0], ops[0], result_m) # (8+12)=20
-          result = calc(result_ml, ops[2], ns[3])   # (20+4)=24
-          if result == 24:
-              sol = "(%d%s(%d%s%d))%s%d" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
-              dprint(1, ">>> Solution (p-io-lr): %s" % (sol) )
-              solutions.append( sol )
+            else:
+                result_ml = calc(ns[0], ops[0], result_m) # (8+12)=20
+                result = calc(result_ml, ops[2], ns[3])   # (20+4)=24
+                if result == 24:
+                    sol = "(%d%s(%d%s%d))%s%d" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
+                    dprint(1, ">>> Solution (p-io-lr): %s" % (sol) )
+                    solutions.append( sol )
 
-        #-------------------
-        # Paired operations - inside/out, *right-left* (p-io-rl): example, for ns=(8,12,6,1): equation=8*((12 / 6) + 1) 
-        tot_equations += 1
-        result_m = calc(ns[1], ops[1], ns[2])     # (12/6)=2
-        result_mr = calc(result_m, ops[2], ns[3]) # (2+1)=3
+            #-------------------
+            # Paired operations - inside/out, *right-left* (p-io-rl): example, for ns=(8,12,6,1): equation=8*((12 / 6) + 1) 
+            tot_equations += 1
+            result_m = calc(ns[1], ops[1], ns[2])     # (12/6)=2
+            result_mr = calc(result_m, ops[2], ns[3]) # (2+1)=3
 
-        # Pass on any divide-by-zero options
-        if ops[0] == '/' and result_mr == 0:
-            dprint(4, ">>> Ignore div-by-zero (p-io-rl): (%d/%d) " % (ns[0], result_mr) )
+            # Pass on any divide-by-zero options
+            if ops[0] == '/' and result_mr == 0:
+                dprint(4, ">>> Ignore div-by-zero (p-io-rl): (%d/%d) " % (ns[0], result_mr) )
         
-        else: 
-          result = calc(ns[0], ops[0], result_mr) # (8*3)=24
-          if result == 24:
-              sol = "%d%s((%d%s%d)%s%d)" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
-              dprint(1, ">>> Solution (p-io-rl): %s" % (sol) )
-              solutions.append( sol )
+            else: 
+                result = calc(ns[0], ops[0], result_mr) # (8*3)=24
+                if result == 24:
+                    sol = "%d%s((%d%s%d)%s%d)" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
+                    dprint(1, ">>> Solution (p-io-rl): %s" % (sol) )
+                    solutions.append( sol )
 
-  dprint(4, "Total-token-permutations: %d" % (tot_token_permutations))
-  dprint(2, "Total-equations: %d" % (tot_equations))
-  return solutions
+    dprint(4, "Total-token-permutations: %d" % (tot_token_permutations))
+    dprint(2, "Total-equations: %d" % (tot_equations))
 
+    return solutions
 
 #-----------------------------------------------------------------------------------------
 def calc (n1, op, n2):
