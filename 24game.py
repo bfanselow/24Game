@@ -11,25 +11,28 @@
   --------------
 
   Logic:
-    Each round of play consists of four numbers and three operators.
-    The four numbers can be arranged in 4!=24 ways (order matters).
-    Since, operators can be repeated, there are 4**3=64 operator permutations.
-    Therefore we have 24*64=1536 possible permutations of combining 
-    the number-seq permuatations with the operator-equence permutations.
+    Each round of play consists of four numbers and three operators. A random 
+    sequence of four numbers is generated on each round. The four numbers can 
+    be arranged in 4!=24 ways (order matters).  Since, operators can be repeated, 
+    there are 4**3=64 operator permutations.  Therefore we have 24*64=1536 possible 
+    permutations of combining the number-seq permuatations with the operator-equence 
+    permutations.
 
     Now, we add to this all the possible permutations of sub-groupings
-    of the equation "tokens" with parenthesis and we end up with 6144 equations.
+    of equation "tokens" by parenthesis and we end up with 6144 equations.
 
-    However, the actual number of mathematically-unique equations is less than this
-    due to many of the equations being mathematically equivelent as a result of the
-    Commutitive and Associative properties of addition and multiplication:
+    If a number is repeated in the number-sequence there will be duplicate equations
+    which we skip. Of the remaining equations, the actual number of equations that
+    are *mathematically-unique* is less than this due to many of the equations 
+    being mathematically equivelent as a result of the Commutitive and Associative 
+    properties of addition and multiplication:
          * Commutative: 2+3 = 3+2,  and 2*3 = 3*2
          * Associative: (2+4)+3 = 2+(4+3), and (2*3)*4 = 2*(3*4)
 
-    After generating a random sequence of 4 numbers we perform all possible
-    mathematical equation permuations (except those involving division-by-zero), 
-    iterating over the different number-sequences and operator sequences, and 
-    performing all unique parenthesis groupings. Any final calculations that result 
+    Currently, we are not skipping *mathematically equivelent* equations.
+    
+    For each new equation, we start calculating the result, checking for and skipping any
+    equation that inovlves division-by-zero.  Any final calculations that result 
     in 24 are stored.
 
     TODO: remove all mathematically equivelent solutions.
@@ -87,88 +90,100 @@ def find_all_24(ns_list, os_list):
     """
 
     solutions = []
-    solution_tokens = []
+
+    # Since numbers and operators can be repeated, we can end up with duplicate equations across 
+    # the various permutations.  We will skip any duplicate equations.
 
     tot_equations = 0
-    tot_token_permutations = 0
 
     # Iterate over list of number sequences
     for ns in ns_list: # example (3,3,2,2)
 
         # Iterate over list of operator-sequences
         for ops in os_list:
-
-            tot_token_permutations += 1 
-            dprint(2, "[%d]: %s  %s" % (tot_token_permutations, str(ns), str(ops))) 
-            token_set = (ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
-            solution_tokens.append( token_set )
-
+                
             # Now we construct the unique combinations of parenthesis groupings 
 
             #-------------------
             # 1) Sequential operations: example, for ns=(3,3,2,2): equation=((3+3)*2)*2
-            # Don;t have to consider divide-by-zero here since input numbers cannot be 0 
-            tot_equations += 1
-            result = calc(ns[0], ops[0], ns[1])    # 3+3=6
-            result = calc(result, ops[1], ns[2])   # 6*2=12
-            result = calc(result, ops[2], ns[3])   # 12*2=24
-            if result == 24:
-                sol = "((%d%s%d)%s%d)%s%d" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
-                dprint(1, ">>> Solution (seq): %s" % (sol) )
-                solutions.append( sol )
+            # Don't have to consider divide-by-zero here since input numbers cannot be 0 
+                
+            equation = "((%d%s%d)%s%d)%s%d" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
+            if equation in solutions:
+                dprint(1, ">>> Skipping duplicate solution (seq): %s" % (equation) )
+            else:
+                tot_equations += 1
+                result = calc(ns[0], ops[0], ns[1])    # 3+3=6
+                result = calc(result, ops[1], ns[2])   # 6*2=12
+                result = calc(result, ops[2], ns[3])   # 12*2=24
+                if result == 24:
+                    dprint(1, ">>> Solution (seq): %s" % (equation) )
+                    solutions.append( equation )
 
             #-------------------
             # 2) Paired operations - left/right (p-lr): example, for ns=(8,4,1,1): equation=(8+4)*(1+1)
-            tot_equations += 1
-            result_l = calc(ns[0], ops[0], ns[1]) # (8+4)=12
-            result_r = calc(ns[2], ops[2], ns[3]) # (1+1)=2
-
-            # Pass on any divide-by-zero options
-            if ops[1] == '/' and result_r == 0:
-                dprint(4, ">>> Ignore div-by-zero (p-lr): (%d/%d) " % (result_l, result_r) )
-
+      
+            equation = "(%d%s%d)%s(%d%s%d)" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
+            if equation in solutions:
+                dprint(1, ">>> Skipping duplicate solution (p-lr): %s" % (equation) )
             else:
-                result = calc(result_l, ops[1], result_r) # (12*2)=24
-                if result == 24:
-                    sol = "(%d%s%d)%s(%d%s%d)" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
-                    dprint(1, ">>> Solution (p-lr): %s" % (sol) )
-                    solutions.append( sol )
+                tot_equations += 1
+                result_l = calc(ns[0], ops[0], ns[1]) # (8+4)=12
+                result_r = calc(ns[2], ops[2], ns[3]) # (1+1)=2
+
+                # Pass on any divide-by-zero options
+                if ops[1] == '/' and result_r == 0:
+                    dprint(4, ">>> Ignore div-by-zero (p-lr): (%d/%d) " % (result_l, result_r) )
+
+                else:
+                    result = calc(result_l, ops[1], result_r) # (12*2)=24
+                    if result == 24:
+                        dprint(1, ">>> Solution (p-lr): %s" % (equation) )
+                        solutions.append( equation )
 
             #-------------------
             # Paired operations - inside/out,*left-right* (p-io-lr): example, for ns=(8,4,3,4): equation=(8 + (4*3))+4 
-            tot_equations += 1
-            result_m = calc(ns[1], ops[1], ns[2])   # (4*3)=12
-
-            # Pass on any divide-by-zero options
-            if ops[0] == '/' and result_m == 0:
-                dprint(4, ">>> Ignore div-by-zero (p-io-lr): (%d/%d) " % (ns[0], result_m) )
-
+                    
+            equation = "(%d%s(%d%s%d))%s%d" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
+            if equation in solutions:
+                dprint(1, ">>> Skipping duplicate solution (p-io-lr): %s" % (equation) )
             else:
-                result_ml = calc(ns[0], ops[0], result_m) # (8+12)=20
-                result = calc(result_ml, ops[2], ns[3])   # (20+4)=24
-                if result == 24:
-                    sol = "(%d%s(%d%s%d))%s%d" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
-                    dprint(1, ">>> Solution (p-io-lr): %s" % (sol) )
-                    solutions.append( sol )
+                tot_equations += 1
+                result_m = calc(ns[1], ops[1], ns[2])   # (4*3)=12
+
+                # Pass on any divide-by-zero options
+                if ops[0] == '/' and result_m == 0:
+                    dprint(4, ">>> Ignore div-by-zero (p-io-lr): (%d/%d) " % (ns[0], result_m) )
+
+                else:
+                    result_ml = calc(ns[0], ops[0], result_m) # (8+12)=20
+                    result = calc(result_ml, ops[2], ns[3])   # (20+4)=24
+                    if result == 24:
+                        dprint(1, ">>> Solution (p-io-lr): %s" % (equation) )
+                        solutions.append( equation )
 
             #-------------------
             # Paired operations - inside/out, *right-left* (p-io-rl): example, for ns=(8,12,6,1): equation=8*((12 / 6) + 1) 
-            tot_equations += 1
-            result_m = calc(ns[1], ops[1], ns[2])     # (12/6)=2
-            result_mr = calc(result_m, ops[2], ns[3]) # (2+1)=3
+                    
+            equation = "%d%s((%d%s%d)%s%d)" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
+            if equation in solutions:
+                dprint(1, ">>> Skipping duplicate solution (p-io-rl): %s" % (equation) )
+            else:
 
-            # Pass on any divide-by-zero options
-            if ops[0] == '/' and result_mr == 0:
-                dprint(4, ">>> Ignore div-by-zero (p-io-rl): (%d/%d) " % (ns[0], result_mr) )
+                tot_equations += 1
+                result_m = calc(ns[1], ops[1], ns[2])     # (12/6)=2
+                result_mr = calc(result_m, ops[2], ns[3]) # (2+1)=3
+
+                # Pass on any divide-by-zero options
+                if ops[0] == '/' and result_mr == 0:
+                    dprint(4, ">>> Ignore div-by-zero (p-io-rl): (%d/%d) " % (ns[0], result_mr) )
         
-            else: 
-                result = calc(ns[0], ops[0], result_mr) # (8*3)=24
-                if result == 24:
-                    sol = "%d%s((%d%s%d)%s%d)" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
-                    dprint(1, ">>> Solution (p-io-rl): %s" % (sol) )
-                    solutions.append( sol )
+                else: 
+                    result = calc(ns[0], ops[0], result_mr) # (8*3)=24
+                    if result == 24:
+                        dprint(1, ">>> Solution (p-io-rl): %s" % (equation) )
+                        solutions.append( equation )
 
-    dprint(4, "Total-token-permutations: %d" % (tot_token_permutations))
     dprint(2, "Total-equations: %d" % (tot_equations))
 
     return solutions
@@ -254,7 +269,6 @@ if __name__ == '__main__':
     print("SOLUTIONS: %d" % len(solution_list))
     for i,s in enumerate(solution_list, start=1):
         print("%d: %s" % (i,str(s)))
-
 
     print("\n------------------------\n")
 
