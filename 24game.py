@@ -88,7 +88,6 @@ def find_all_24(ns_list, os_list):
    expressions are generated and evaluated instead.
   """
 
-  token_set = []
   solutions = []
   solution_tokens = []
 
