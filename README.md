@@ -10,7 +10,7 @@ Background on the game: https://en.wikipedia.org/wiki/24_Game
 ### Play a single game
 #### You can hide the solutions, but we show them in this example. NOTE: There may or may not be solutions!
 ```
-from 24game import build_game
+from twenty_four_game import build_game
 ...
 game = build_game()
 numbers = game['numbers']
@@ -23,7 +23,7 @@ for i,s in enumerate(solution_list, start=1):
 
 ### Play or build multiple games (ALL with one or more solutions)
 ```
-from 24game import generate_valid_games
+from twenty_four_game import generate_valid_games
 ...
 #Perform 5 (valid) games
 games = generate_valid_games(5)
