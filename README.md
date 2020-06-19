@@ -7,7 +7,7 @@ Background on the game: https://en.wikipedia.org/wiki/24_Game
 
 ---
 
-### Play a single game
+### Play a single game (possible that solutions do not exist!)
 #### You can hide the solutions, but we show them in this example. 
 ```
 >>> from twenty_four_game import build_game
