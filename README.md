@@ -3,7 +3,9 @@ Play and/or generate games for the Math "24" Game
 
 Background on the game: https://en.wikipedia.org/wiki/24_Game
 
-#### TODO: Put a UI around this code and create a challenge to solve 10 games in shortest amount of time
+#### TODO: 
+ * Collapse mathematically-equivelent soltuions from Commutative and Associateive proprties of addition and multiplication. 
+ * Put a UI around this code and create a challenge to solve N games in shortest amount of time.
 
 ---
 
