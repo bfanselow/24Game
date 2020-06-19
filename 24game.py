@@ -81,11 +81,9 @@ def find_all_24(ns_list, os_list):
    and determine if 24 can be made from any of the combined mathematical operations.
    Store all valid solutions.
    Args:
-    * ns_list: list of number-sequence tuples, each containing uniq combo of 4 numbers
-    * os_list: list of operator-sequence tuples, each containing uniq combo of 3 operators
+    * ns_list: list of number-sequence tuples, each containing uniq permutation of 4 numbers
+    * os_list: list of operator-sequence tuples, each containing uniq permutation of 3 operators
    Return: list of valid solutions. Can be empty!
-   TODO: The difference between the inner "for" loops can be abstracted away if prefix
-   expressions are generated and evaluated instead.
   """
 
   solutions = []
