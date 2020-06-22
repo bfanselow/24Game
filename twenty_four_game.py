@@ -3,40 +3,32 @@
   Description:
    This script generates problems and solutions for the "24" math game:
     (https://en.wikipedia.org/wiki/24_Game)
-
   Author: Bill Fanselow  2020-06-18
-
   Credit to "OregonTrail" on StackOverflow for ideas on simplifying the logic.
   (https://stackoverflow.com/questions/25028929/24-game-using-python/25029244)
   --------------
-
   Logic:
-    Each round of play consists of four numbers and three operators. A random 
-    sequence of four numbers is generated on each round. The four numbers can 
-    be arranged in 4!=24 ways (order matters).  Since, operators can be repeated, 
-    there are 4**3=64 operator permutations.  Therefore we have 24*64=1536 possible 
-    permutations of combining the number-seq permuatations with the operator-equence 
+    Each round of play consists of four numbers and three operators. A random
+    sequence of four numbers is generated on each round. The four numbers can
+    be arranged in 4!=24 ways (order matters).  Since, operators can be repeated,
+    there are 4**3=64 operator permutations.  Therefore we have 24*64=1536 possible
+    permutations of combining the number-seq permuatations with the operator-equence
     permutations.
-
     Now, we add to this all the possible permutations of sub-groupings
     of equation "tokens" by parenthesis which results in 6144 total equations.
-
     If a number is repeated in the number-sequence there will be duplicate equations
     which we skip. Of the remaining equations, the actual number of equations that
-    are *mathematically-unique* is less than this due to many of the equations 
-    being mathematically equivelent as a result of the Commutitive and Associative 
+    are *mathematically-unique* is less than this due to many of the equations
+    being mathematically equivelent as a result of the Commutitive and Associative
     properties of addition and multiplication:
          * Commutative: 2+3 = 3+2,  and 2*3 = 3*2
          * Associative: (2+4)+3 = 2+(4+3), and (2*3)*4 = 2*(3*4)
-
     Currently, we are not skipping *mathematically equivelent* equations.
-    
+
     For each new equation, we start calculating the result, checking for and skipping any
-    equation that inovlves division-by-zero.  Any final calculations that result 
+    equation that inovlves division-by-zero.  Any final calculations that result
     in 24 are stored.
-
     TODO: remove all mathematically equivelent solutions.
-
   --------------
   NOTES:
   1) It is possible (though not ususally done) to arrive at a soltuion by dividing and
@@ -50,10 +42,10 @@
 import itertools
 import random
 
-DEBUG = 0 
+DEBUG = 0
 
 # Play the game with either 1-digit limit (1-9) or 2-digit limit (1-24)
-DIGITS = 1 
+DIGITS = 1
 
 # All operators
 op_list = [ '+', '-', '*', '/' ]
@@ -91,7 +83,7 @@ def find_all_24(ns_list, os_list):
 
     solutions = []
 
-    # Since numbers and operators can be repeated, we can end up with duplicate equations across 
+    # Since numbers and operators can be repeated, we can end up with duplicate equations across
     # the various permutations.  We will skip any duplicate equations.
 
     tot_equations = 0
@@ -101,13 +93,13 @@ def find_all_24(ns_list, os_list):
 
         # Iterate over list of operator-sequences
         for ops in os_list:
-                
-            # Now we construct the unique combinations of parenthesis groupings 
+
+            # Now we construct the unique combinations of parenthesis groupings
 
             #-------------------
             # 1) Sequential operations: example, for ns=(3,3,2,2): equation=((3+3)*2)*2
-            # Don't have to consider divide-by-zero here since input numbers cannot be 0 
-                
+            # Don't have to consider divide-by-zero here since input numbers cannot be 0
+
             equation = "((%d%s%d)%s%d)%s%d" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
             if equation in solutions:
                 dprint(1, ">>> Skipping duplicate solution (seq): %s" % (equation) )
@@ -122,7 +114,7 @@ def find_all_24(ns_list, os_list):
 
             #-------------------
             # 2) Paired operations - left/right (p-lr): example, for ns=(8,4,1,1): equation=(8+4)*(1+1)
-      
+
             equation = "(%d%s%d)%s(%d%s%d)" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
             if equation in solutions:
                 dprint(1, ">>> Skipping duplicate solution (p-lr): %s" % (equation) )
@@ -142,8 +134,8 @@ def find_all_24(ns_list, os_list):
                         solutions.append( equation )
 
             #-------------------
-            # Paired operations - inside/out,*left-right* (p-io-lr): example, for ns=(8,4,3,4): equation=(8 + (4*3))+4 
-                    
+            # Paired operations - inside/out,*left-right* (p-io-lr): example, for ns=(8,4,3,4): equation=(8 + (4*3))+4
+
             equation = "(%d%s(%d%s%d))%s%d" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
             if equation in solutions:
                 dprint(1, ">>> Skipping duplicate solution (p-io-lr): %s" % (equation) )
@@ -163,8 +155,8 @@ def find_all_24(ns_list, os_list):
                         solutions.append( equation )
 
             #-------------------
-            # Paired operations - inside/out, *right-left* (p-io-rl): example, for ns=(8,12,6,1): equation=8*((12 / 6) + 1) 
-                    
+            # Paired operations - inside/out, *right-left* (p-io-rl): example, for ns=(8,12,6,1): equation=8*((12 / 6) + 1)
+
             equation = "%d%s((%d%s%d)%s%d)" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
             if equation in solutions:
                 dprint(1, ">>> Skipping duplicate solution (p-io-rl): %s" % (equation) )
@@ -177,8 +169,8 @@ def find_all_24(ns_list, os_list):
                 # Pass on any divide-by-zero options
                 if ops[0] == '/' and result_mr == 0:
                     dprint(4, ">>> Ignore div-by-zero (p-io-rl): (%d/%d) " % (ns[0], result_mr) )
-        
-                else: 
+
+                else:
                     result = calc(ns[0], ops[0], result_mr) # (8*3)=24
                     if result == 24:
                         dprint(1, ">>> Solution (p-io-rl): %s" % (equation) )
@@ -222,12 +214,18 @@ def get_random_four():
     return random_four
 
 #-----------------------------------------------------------------------------------------
-def build_game():
+def build_game(number_list=None):
     """
-    Create a random sequence of 4 numbers and find solutions
+     Create a game "result object" (4 numbers and all solutions).
+     If number_list is None, create the 4 input numbers at random.
+     If number_list is populated , create the solutions with those numbers.
+     Return: result object { 'numbers': [x,x,x,x], 'solutions': [] }
     """
-    r4 = get_random_four()
-    number_sequences = get_num_permutations(r4)
+    n4 = number_list
+    if number_list is None:
+        n4 = get_random_four()
+
+    number_sequences = get_num_permutations(n4)
 
     dprint(4, "NS: %s" % number_sequences)
     dprint(4, "OPS (%d): %s" % (len(ops_perms), ops_perms), end="\n\n")
@@ -235,7 +233,7 @@ def build_game():
     solution_list = find_all_24(number_sequences, ops_perms)
 
     result = {
-     'numbers': r4,
+     'numbers': n4,
      'solutions': solution_list
     }
 
@@ -261,7 +259,18 @@ def generate_valid_games(N):
 #-----------------------------------------------------------------------------------------
 if __name__ == '__main__':
 
-    ## Perfom a single game
+    ## Perfom a single game from input numbers
+    n4 = [2,4,5,7]
+    game = build_game(n4)
+    numbers = game['numbers']
+    solution_list = game['solutions']
+    print("NUMBERS: %s" % (numbers))
+    print("SOLUTIONS: %d" % len(solution_list))
+    for i,s in enumerate(solution_list, start=1):
+        print("%d: %s" % (i,str(s)))
+
+    print("\n------------------------\n")
+    ## Perfom a single game from random numbers
     game = build_game()
     numbers = game['numbers']
     solution_list = game['solutions']
