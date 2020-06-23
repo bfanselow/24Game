@@ -14,8 +14,8 @@
     there are 4**3=64 operator permutations.  Therefore we have 24*64=1536 possible
     permutations of combining the number-seq permuatations with the operator-equence
     permutations.
-    Now, we add to this all the possible permutations of sub-groupings
-    of equation "tokens" by parenthesis which results in 6144 total equations.
+    Now, we add to this all the possible permutations of sub-groupings of
+    equation "tokens" by parenthesis which results in 5568 total possible equations.
     If a number is repeated in the number-sequence there will be duplicate equations
     which we skip. Of the remaining equations, the actual number of equations that
     are *mathematically-unique* is less than this due to many of the equations
@@ -25,10 +25,12 @@
          * Associative: (2+4)+3 = 2+(4+3), and (2*3)*4 = 2*(3*4)
     Currently, we are not skipping *mathematically equivelent* equations.
 
-    For each new equation, we start calculating the result, checking for and skipping any
-    equation that inovlves division-by-zero.  Any final calculations that result
+    For each new equation, we start calculating the result, checking for and skipping
+    any equation that inovlves division-by-zero.  Any final calculations that result
     in 24 are stored.
+
     TODO: remove all mathematically equivelent solutions.
+
   --------------
   NOTES:
   1) It is possible (though not ususally done) to arrive at a soltuion by dividing and
@@ -42,7 +44,7 @@
 import itertools
 import random
 
-DEBUG = 0
+DEBUG = 0 
 
 # Play the game with either 1-digit limit (1-9) or 2-digit limit (1-24)
 DIGITS = 1
@@ -50,7 +52,7 @@ DIGITS = 1
 # All operators
 op_list = [ '+', '-', '*', '/' ]
 
-# Generate permuations of 3 operator sequences (with repeat), calculated by the Cartesion-product
+# Generate al permuations of 3 operator sequences (with repeat), calculated by the Cartesion-product
 ops_perms = list(itertools.product(op_list, repeat=3))
 
 #-----------------------------------------------------------------------------------------
@@ -68,6 +70,115 @@ def get_num_permutations(num_list):
     """
     num_perms = list(itertools.permutations(num_list))
     return num_perms
+
+#-----------------------------------------------------------------------------------------
+def check_sequential(num_list, op_list):
+    """
+     Simple (sequential) arithmetic check for result=24 when there is either no 
+     grouping required, such as 1+7+8+8, or when grouping is sequential from 
+     left-to-right - i.e. ((3+3)*2)*2
+     Args:
+      * num_list: list of 4 numbers
+      * op_list: list of 3 operators
+     Return: valid True|False (whether calculation results in a valid "24" solution) 
+    """
+                        
+    dprint(4, " *check_sequential(%s, %s)" % (num_list, op_list) )
+   
+    valid = False             
+    result = calc(num_list[0], op_list[0], num_list[1]) # 3+3=6
+    result = calc(result, op_list[1], num_list[2])      # 6*2=12
+    result = calc(result, op_list[2], num_list[3])      # 12*2=24
+    if result == 24:
+        valid = True
+    
+    return valid 
+
+#-----------------------------------------------------------------------------------------
+def check_paired(num_list, op_list):
+    """
+     Arithmetic check for result=24 when grouping the equation with simple left and right
+     number pairs - i.e. (8+4)*(1+2)
+     Args:
+      * num_list: list of 4 numbers
+      * op_list: list of 3 operators
+     Return: valid True|False (whether calculation results in a valid "24" solution) 
+    """
+                        
+    dprint(4, " *check_paired_lr(%s, %s)" % (num_list, op_list) )
+                    
+    valid = False             
+    result_l = calc(num_list[0], op_list[0], num_list[1]) # (8+4)=12
+    result_r = calc(num_list[2], op_list[2], num_list[3]) # (1+1)=2
+  
+    # Pass on any divide-by-zero options
+    if op_list[1] == '/' and result_r == 0:
+        dprint(3, ">>> Ignore div-by-zero (p-lr): (%d/%d) " % (result_l, result_r) )
+  
+    else:
+        result = calc(result_l, op_list[1], result_r) # (12*2)=24
+        if result == 24:
+            valid = True
+
+    return valid 
+
+#-----------------------------------------------------------------------------------------
+def check_grouped_middle_left(num_list, op_list):
+    """
+     Arithmetic check for result=24 when grouping the equation from inner-most pair to 
+     left side - i.e.  for num_list=(8,4,3,4) equation=(8+(4*3))+4
+     Args:
+      * num_list: list of 4 numbers
+      * op_list: list of 3 operators
+     Return: valid True|False (whether calculation results in a valid "24" solution) 
+    """
+                        
+    dprint(4, " *check_grouped_middle_left(%s, %s)" % (num_list, op_list) )
+                    
+    valid = False
+    # middle grouping 
+    result_m = calc(num_list[1], op_list[1], num_list[2])   # (4*3)=12
+
+    # Pass on any divide-by-zero options
+    if op_list[0] == '/' and result_m == 0:
+        dprint(3, ">>> Ignore div-by-zero (g-ml): (%d/%d) " % (num_list[0], result_m) )
+
+    else:
+        result_ml = calc(num_list[0], op_list[0], result_m) # (8+12)=20
+        result = calc(result_ml, op_list[2], num_list[3])   # (20+4)=24
+        if result == 24:
+            valid = True
+
+    return valid 
+
+#-----------------------------------------------------------------------------------------
+def check_grouped_middle_right(num_list, op_list):
+    """
+     Arithmetic check for result=24 when grouping the equation from inner-most pair to 
+     right side - i.e.  for num_list=(8,12,6,1) equation=8*((12 / 6) + 1)
+     Args:
+      * num_list: list of 4 numbers
+      * op_list: list of 3 operators
+     Return: valid True|False (whether calculation results in a valid "24" solution) 
+    """
+                        
+    dprint(4, " *check_grouped_middle_right(%s, %s)" % (num_list, op_list) )
+                    
+    valid = False
+    # middle grouping 
+    result_m = calc(num_list[1], op_list[1], num_list[2])   # (12/6)=2
+    result_mr = calc(result_m, op_list[2], num_list[3])     # (2+1)=3
+
+    # Pass on any divide-by-zero options
+    if op_list[0] == '/' and result_mr == 0:
+        dprint(3, ">>> Ignore div-by-zero (g-mr): (%d/%d) " % (num_list[0], result_mr) )
+
+    else:
+        result = calc(num_list[0], op_list[0], result_mr) # (8*3)=24
+        if result == 24:
+            valid = True
+
+    return valid 
 
 #-----------------------------------------------------------------------------------------
 def find_all_24(ns_list, os_list):
@@ -93,90 +204,73 @@ def find_all_24(ns_list, os_list):
 
         # Iterate over list of operator-sequences
         for ops in os_list:
+    
 
-            # Now we construct the unique combinations of parenthesis groupings
-
-            #-------------------
-            # 1) Sequential operations: example, for ns=(3,3,2,2): equation=((3+3)*2)*2
-            # Don't have to consider divide-by-zero here since input numbers cannot be 0
-
-            equation = "((%d%s%d)%s%d)%s%d" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
-            if equation in solutions:
-                dprint(1, ">>> Skipping duplicate solution (seq): %s" % (equation) )
-            else:
-                tot_equations += 1
-                result = calc(ns[0], ops[0], ns[1])    # 3+3=6
-                result = calc(result, ops[1], ns[2])   # 6*2=12
-                result = calc(result, ops[2], ns[3])   # 12*2=24
-                if result == 24:
-                    dprint(1, ">>> Solution (seq): %s" % (equation) )
-                    solutions.append( equation )
-
-            #-------------------
-            # 2) Paired operations - left/right (p-lr): example, for ns=(8,4,1,1): equation=(8+4)*(1+1)
-
-            equation = "(%d%s%d)%s(%d%s%d)" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
-            if equation in solutions:
-                dprint(1, ">>> Skipping duplicate solution (p-lr): %s" % (equation) )
-            else:
-                tot_equations += 1
-                result_l = calc(ns[0], ops[0], ns[1]) # (8+4)=12
-                result_r = calc(ns[2], ops[2], ns[3]) # (1+1)=2
-
-                # Pass on any divide-by-zero options
-                if ops[1] == '/' and result_r == 0:
-                    dprint(4, ">>> Ignore div-by-zero (p-lr): (%d/%d) " % (result_l, result_r) )
-
+            # If we ONLY have + and -, we don't need any groupings
+            if '*' not in ops and '/' not in ops:
+                equation = "%d%s%d%s%d%s%d" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
+                if equation in solutions:
+                    dprint(1, ">>> Skipping duplicate solution (simple): %s" % (equation) )
                 else:
-                    result = calc(result_l, ops[1], result_r) # (12*2)=24
-                    if result == 24:
+                    tot_equations += 1
+                    if check_sequential(ns, ops): 
+                        dprint(1, ">>> Solution (simple): %s" % (equation) )
+                        solutions.append( equation )
+
+            # Otherwise, we need to check all the unique combinations of parenthesis groupings
+            else:
+
+                #-------------------
+                # 1) Sequential operations: example, for ns=(3,3,2,2): equation=((3+3)*2)*2
+                # Don't have to consider divide-by-zero here since input numbers cannot be 0
+  
+                equation = "((%d%s%d)%s%d)%s%d" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
+                if equation in solutions:
+                    dprint(1, ">>> Skipping duplicate solution (seq): %s" % (equation) )
+                else:
+                    tot_equations += 1
+                    if check_sequential(ns, ops): 
+                        dprint(1, ">>> Solution (seq): %s" % (equation) )
+                        solutions.append( equation )
+
+                #-------------------
+                # 2) Paired operations - left/right (p-lr): example, for ns=(8,4,1,1): equation=(8+4)*(1+1)
+  
+                equation = "(%d%s%d)%s(%d%s%d)" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
+                if equation in solutions:
+                    dprint(1, ">>> Skipping duplicate solution (p-lr): %s" % (equation) )
+                else:
+                    tot_equations += 1
+                    if check_paired(ns, ops): 
                         dprint(1, ">>> Solution (p-lr): %s" % (equation) )
                         solutions.append( equation )
 
-            #-------------------
-            # Paired operations - inside/out,*left-right* (p-io-lr): example, for ns=(8,4,3,4): equation=(8 + (4*3))+4
-
-            equation = "(%d%s(%d%s%d))%s%d" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
-            if equation in solutions:
-                dprint(1, ">>> Skipping duplicate solution (p-io-lr): %s" % (equation) )
-            else:
-                tot_equations += 1
-                result_m = calc(ns[1], ops[1], ns[2])   # (4*3)=12
-
-                # Pass on any divide-by-zero options
-                if ops[0] == '/' and result_m == 0:
-                    dprint(4, ">>> Ignore div-by-zero (p-io-lr): (%d/%d) " % (ns[0], result_m) )
-
+                #-------------------
+                # 3) Grouped operations - middle,left* (g-ml): example, for ns=(8,4,3,4): equation=(8 + (4*3))+4
+  
+                equation = "(%d%s(%d%s%d))%s%d" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
+                if equation in solutions:
+                    dprint(1, ">>> Skipping duplicate solution (g-ml): %s" % (equation) )
                 else:
-                    result_ml = calc(ns[0], ops[0], result_m) # (8+12)=20
-                    result = calc(result_ml, ops[2], ns[3])   # (20+4)=24
-                    if result == 24:
-                        dprint(1, ">>> Solution (p-io-lr): %s" % (equation) )
+                    tot_equations += 1
+                    if check_grouped_middle_left(ns, ops): 
+                        dprint(1, ">>> Solution (g-ml): %s" % (equation) )
                         solutions.append( equation )
 
-            #-------------------
-            # Paired operations - inside/out, *right-left* (p-io-rl): example, for ns=(8,12,6,1): equation=8*((12 / 6) + 1)
 
-            equation = "%d%s((%d%s%d)%s%d)" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
-            if equation in solutions:
-                dprint(1, ">>> Skipping duplicate solution (p-io-rl): %s" % (equation) )
-            else:
-
-                tot_equations += 1
-                result_m = calc(ns[1], ops[1], ns[2])     # (12/6)=2
-                result_mr = calc(result_m, ops[2], ns[3]) # (2+1)=3
-
-                # Pass on any divide-by-zero options
-                if ops[0] == '/' and result_mr == 0:
-                    dprint(4, ">>> Ignore div-by-zero (p-io-rl): (%d/%d) " % (ns[0], result_mr) )
-
+                #-------------------
+                # 4) Grouped operations - middle,right (g-mr): example, for ns=(8,12,6,1): equation=8*((12 / 6) + 1)
+  
+                equation = "%d%s((%d%s%d)%s%d)" % ( ns[0], ops[0], ns[1], ops[1], ns[2], ops[2], ns[3] )
+                if equation in solutions:
+                    dprint(1, ">>> Skipping duplicate solution (g-mr): %s" % (equation) )
                 else:
-                    result = calc(ns[0], ops[0], result_mr) # (8*3)=24
-                    if result == 24:
-                        dprint(1, ">>> Solution (p-io-rl): %s" % (equation) )
+                    tot_equations += 1
+                    if check_grouped_middle_right(ns, ops): 
+                        dprint(1, ">>> Solution (g-mr): %s" % (equation) )
                         solutions.append( equation )
 
-    dprint(2, "Total-equations: %d" % (tot_equations))
+    dprint(2, "Total-equations checked: %d" % (tot_equations))
 
     return solutions
 
@@ -261,6 +355,7 @@ if __name__ == '__main__':
 
     ## Perfom a single game from input numbers
     n4 = [2,4,5,7]
+#    n4 = [1,7,8,8]
     game = build_game(n4)
     numbers = game['numbers']
     solution_list = game['solutions']
@@ -268,8 +363,8 @@ if __name__ == '__main__':
     print("SOLUTIONS: %d" % len(solution_list))
     for i,s in enumerate(solution_list, start=1):
         print("%d: %s" % (i,str(s)))
-
     print("\n------------------------\n")
+
     ## Perfom a single game from random numbers
     game = build_game()
     numbers = game['numbers']
@@ -278,7 +373,6 @@ if __name__ == '__main__':
     print("SOLUTIONS: %d" % len(solution_list))
     for i,s in enumerate(solution_list, start=1):
         print("%d: %s" % (i,str(s)))
-
     print("\n------------------------\n")
 
     ## Perform 5 (valid) games!
